@@ -8,7 +8,7 @@ const createPost = async (req, res) => {
     data: {
       user_id: Number(user_id),
       title,
-      discription
+      discription,
     },
   });
 
@@ -18,7 +18,27 @@ const createPost = async (req, res) => {
 // get allPost ============
 const getPosts = async (req, res) => {
   try {
-    const posts = await prisma.post.findMany({});
+    const posts = await prisma.post.findMany({
+      include: {
+        comment: {
+          include: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        id: "desc"
+      },
+      where: {
+         title: {
+          startsWith: "Never"
+         }
+      }
+    });
 
     res.status(200).json({ data: posts });
   } catch (err) {
@@ -71,7 +91,7 @@ const updatePost = async (req, res) => {
           data: {
             user_id: Number(user_id),
             title,
-            discription
+            discription,
           },
         })
         .then((result) => {
@@ -89,24 +109,24 @@ const updatePost = async (req, res) => {
   }
 };
 
-
 // DeletePost ==========
-const deletePost = async (req, res)=>{
-  const postId = req.params.id
+const deletePost = async (req, res) => {
+  const postId = req.params.id;
 
-  try{
-    await prisma.post.delete({
-      where: {
-        id: Number(postId)
-      }
-    }).then((result)=>{
-        res.status(200).json({msg: 'post deleted sucessfully', data: result})
-    }).catch((err)=>{
-      res.status(500).json({msg: err})
-    })
-  }catch(err){
-
-  }
-} 
+  try {
+    await prisma.post
+      .delete({
+        where: {
+          id: Number(postId),
+        },
+      })
+      .then((result) => {
+        res.status(200).json({ msg: "post deleted sucessfully", data: result });
+      })
+      .catch((err) => {
+        res.status(500).json({ msg: err });
+      });
+  } catch (err) {}
+};
 
 module.exports = { createPost, getPosts, singlePost, updatePost, deletePost };
